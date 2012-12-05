@@ -61,6 +61,10 @@ my $tests_flags = {};
         [ foo => 42 ]
     };
 
+    post '/json' => sub {
+        [{request_body => from_json(request->body)}];
+    };
+
     get '/intercepted' => sub { 'not intercepted' };
 
     hook before => sub {
@@ -93,6 +97,9 @@ subtest 'serializer hooks' => sub {
     is $tests_flags->{before_serializer}, 1, 'before_serializer was called';
     is $tests_flags->{after_serializer},  1, 'after_serializer was called';
     is $tests_flags->{before_file_render}, undef, "before_file_render undef";
+
+    $r = dancer_response post => '/json', { body => JSON::to_json([1,2,3]) };
+    is $r->content, JSON::to_json([{request_body => [1,2,3]}, added_in_hook => 1]), 'posted request body as array' or diag $r->content;
 };
 
 subtest 'file render hooks' => sub {
